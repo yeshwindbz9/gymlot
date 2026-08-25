@@ -7411,7 +7411,7 @@ body::before {
   /* REST TIMER */
   .rest-overlay {
     padding: 12px;
-    align-items: end;
+    align-items: center;
   }
 
   .rest-card {
@@ -8009,7 +8009,7 @@ body::before {
   }
 
   .rest-overlay {
-    align-items: end;
+    align-items: center;
     padding: 8px;
   }
 
