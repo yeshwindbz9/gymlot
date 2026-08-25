@@ -16,7 +16,7 @@ export default function Hero() {
       <div className="hero-copy">
         <div className="hero-kicker">
           <span className="hero-kicker-dot" />
-          YOUR AI GYM HELPER
+          GYM HELPER
         </div>
 
         <h1 className="hero-title">
