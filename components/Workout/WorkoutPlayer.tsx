@@ -27,14 +27,19 @@ type Props = {
 export type WorkoutCompletionSummary = {
   startedAt: string;
   completedAt: string;
+
   totalDurationSeconds: number;
+  activeSetSeconds: number;
 
   exercisesCompleted: number;
   totalExercises: number;
 
   setsCompleted: number;
   totalSets: number;
+
+  exercisesSkipped: number;
 };
+
 const MIN_SET_SECONDS = 20;
 
 function createFallbackExercises(
@@ -310,20 +315,29 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   };
 
   const finishWorkout = () => {
+    const activeSetSeconds = Object.values(setDurations).reduce(
+      (total, duration) => total + duration,
+      0,
+    );
+
     onComplete({
       startedAt: startedAt.toISOString(),
+
       completedAt: new Date().toISOString(),
 
       totalDurationSeconds: elapsedSeconds,
+
+      activeSetSeconds,
 
       exercisesCompleted,
       totalExercises: exercises.length,
 
       setsCompleted,
       totalSets,
+
+      exercisesSkipped: skippedExercises.size,
     });
   };
-
   return (
     <section className="workout-player" id="workout-player">
       <div className="workout-player-grid" />

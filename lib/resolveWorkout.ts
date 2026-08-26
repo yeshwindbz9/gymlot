@@ -13,20 +13,13 @@ async function resolveExercise(
   exercise: GeneratedExercise,
 ): Promise<ResolvedExercise> {
   /*
-   * Search the full Gemini name first.
+   * One ExerciseDB request only.
+   *
+   * If ExerciseDB is unavailable or
+   * no suitable result exists, Gymlot
+   * gracefully keeps the Gemini exercise.
    */
-  let candidates = await searchExercises(exercise.name);
-
-  /*
-   * Fallback search:
-   * if ExerciseDB doesn't understand the exact name,
-   * try a shorter target/equipment query.
-   */
-  if (!candidates.length) {
-    candidates = await searchExercises(
-      `${exercise.equipment} ${exercise.targetMuscle}`,
-    );
-  }
+  const candidates = await searchExercises(exercise.name);
 
   const match = findBestExerciseMatch(exercise, candidates);
 

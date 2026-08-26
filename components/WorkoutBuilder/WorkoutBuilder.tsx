@@ -410,16 +410,6 @@ export default function WorkoutBuilder() {
         onComplete={(summary) => {
           setCompletionSummary(summary);
           setWorkoutStarted(false);
-
-          if (generatedWorkout) {
-            const calculated = calculateWorkoutSummary({
-              completion: summary,
-
-              weightKg: weightKg ? Number(weightKg) : null,
-
-              experience,
-            });
-          }
         }}
       />
     );
@@ -1242,6 +1232,36 @@ export default function WorkoutBuilder() {
                 <ArrowRight size={20} />
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {isGenerating && (
+        <div className="generation-overlay" role="status" aria-live="polite">
+          <div className="generation-card">
+            <div className="generation-loader">
+              <Dumbbell size={34} strokeWidth={1.5} />
+            </div>
+
+            <span>GYMLOT IS THINKING</span>
+
+            <h3>
+              BUILDING
+              <br />
+              YOUR SESSION.
+            </h3>
+
+            <p>
+              Picking exercises, balancing muscle groups and planning your sets
+              and rest.
+            </p>
+
+            <div className="generation-dots">
+              <i />
+              <i />
+              <i />
+            </div>
+
+            <small>DON&apos;T CLOSE THIS WINDOW</small>
           </div>
         </div>
       )}

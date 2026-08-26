@@ -5,7 +5,6 @@ import {
   Check,
   Droplets,
   Flame,
-  Dumbbell,
   Beef,
   Wheat,
   CircleDot,
@@ -60,6 +59,15 @@ export default function WorkoutSummary({
     experience,
   });
 
+  const resolvedExercises = workout.resolvedExercises?.length
+    ? workout.resolvedExercises
+    : workout.exercises.map((exercise) => ({
+        exerciseId: null,
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+      }));
+
   return (
     <section className="final-summary">
       <div className="final-summary-grid" />
@@ -98,10 +106,14 @@ export default function WorkoutSummary({
             <span>CALORIES</span>
 
             <strong>
-              {summary.calories.min}–{summary.calories.max}
+              {summary.calories
+                ? `${summary.calories.min}–${summary.calories.max}`
+                : "—"}
             </strong>
 
-            <small>estimated kcal</small>
+            <small>
+              {summary.calories ? "estimated kcal" : "add weight for estimate"}
+            </small>
           </div>
 
           <div>
@@ -125,6 +137,19 @@ export default function WorkoutSummary({
           </div>
         </div>
 
+        {completion.exercisesSkipped > 0 && (
+          <div className="summary-skipped-note">
+            <span>SKIPPED</span>
+
+            <strong>
+              {completion.exercisesSkipped}{" "}
+              {completion.exercisesSkipped === 1 ? "exercise" : "exercises"}
+            </strong>
+
+            <small>skipped exercises are not counted as completed</small>
+          </div>
+        )}
+
         <div className="summary-session-card">
           <div className="summary-session-top">
             <span>TODAY&apos;S SESSION</span>
@@ -135,7 +160,7 @@ export default function WorkoutSummary({
           <h2>{workout.title}</h2>
 
           <div className="summary-exercise-list">
-            {(workout.resolvedExercises ?? []).map((exercise, index) => (
+            {resolvedExercises.map((exercise, index) => (
               <div key={exercise.exerciseId ?? `${exercise.name}-${index}`}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
 
@@ -165,59 +190,70 @@ export default function WorkoutSummary({
             </p>
           </div>
 
-          <div className="summary-nutrition-grid">
-            <div className="nutrition-card">
-              <Droplets size={25} strokeWidth={1.5} />
+          {summary.nutrition ? (
+            <div className="summary-nutrition-grid">
+              <div className="nutrition-card">
+                <Droplets size={25} strokeWidth={1.5} />
 
-              <span>WATER</span>
+                <span>WATER</span>
 
-              <strong>
-                {summary.nutrition.waterLitres.min}–
-                {summary.nutrition.waterLitres.max}L
-              </strong>
+                <strong>
+                  {summary.nutrition.waterLitres.min}–
+                  {summary.nutrition.waterLitres.max}L
+                </strong>
 
-              <small>estimated daily intake</small>
+                <small>estimated daily intake</small>
+              </div>
+
+              <div className="nutrition-card">
+                <Beef size={25} strokeWidth={1.5} />
+
+                <span>PROTEIN</span>
+
+                <strong>
+                  {summary.nutrition.proteinGrams.min}–
+                  {summary.nutrition.proteinGrams.max}g
+                </strong>
+
+                <small>general daily range</small>
+              </div>
+
+              <div className="nutrition-card">
+                <Wheat size={25} strokeWidth={1.5} />
+
+                <span>CARBS</span>
+
+                <strong>
+                  {summary.nutrition.carbsGrams.min}–
+                  {summary.nutrition.carbsGrams.max}g
+                </strong>
+
+                <small>general daily range</small>
+              </div>
+
+              <div className="nutrition-card">
+                <CircleDot size={25} strokeWidth={1.5} />
+
+                <span>FAT</span>
+
+                <strong>
+                  {summary.nutrition.fatGrams.min}–
+                  {summary.nutrition.fatGrams.max}g
+                </strong>
+
+                <small>general daily range</small>
+              </div>
             </div>
+          ) : (
+            <div className="summary-nutrition-missing">
+              <strong>ADD YOUR WEIGHT FOR PERSONALISED ESTIMATES.</strong>
 
-            <div className="nutrition-card">
-              <Beef size={25} strokeWidth={1.5} />
-
-              <span>PROTEIN</span>
-
-              <strong>
-                {summary.nutrition.proteinGrams.min}–
-                {summary.nutrition.proteinGrams.max}g
-              </strong>
-
-              <small>general daily range</small>
+              <p>
+                Water and macronutrient estimates depend heavily on body weight,
+                so Gymlot doesn&apos;t guess when it hasn&apos;t been provided.
+              </p>
             </div>
-
-            <div className="nutrition-card">
-              <Wheat size={25} strokeWidth={1.5} />
-
-              <span>CARBS</span>
-
-              <strong>
-                {summary.nutrition.carbsGrams.min}–
-                {summary.nutrition.carbsGrams.max}g
-              </strong>
-
-              <small>general daily range</small>
-            </div>
-
-            <div className="nutrition-card">
-              <CircleDot size={25} strokeWidth={1.5} />
-
-              <span>FAT</span>
-
-              <strong>
-                {summary.nutrition.fatGrams.min}–
-                {summary.nutrition.fatGrams.max}g
-              </strong>
-
-              <small>general daily range</small>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="summary-post-workout">

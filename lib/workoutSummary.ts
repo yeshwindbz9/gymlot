@@ -34,9 +34,9 @@ export type WorkoutSummaryStats = {
   calories: {
     min: number;
     max: number;
-  };
+  } | null;
 
-  nutrition: NutritionEstimate;
+  nutrition: NutritionEstimate | null;
 };
 
 function roundToNearest5(value: number) {
@@ -58,69 +58,138 @@ export function calculateWorkoutSummary({
   );
 
   /*
-   * We deliberately use a broad MET-style range rather than
-   * pretending calorie burn is precise.
+   * CALORIE ESTIMATE
    *
-   * General resistance training often sits around:
-   * ~3.5 MET for moderate effort
-   * ~6 MET for vigorous effort
+   * Only calculate calories when the user has supplied
+   * a valid body weight.
+   *
+   * This avoids pretending that a default 70 kg body
+   * weight is personalised.
    */
-  const effectiveWeight = weightKg ?? 70;
+  let calories: {
+    min: number;
+    max: number;
+  } | null = null;
 
-  const hours = durationMinutes / 60;
+  if (weightKg && weightKg > 0) {
+    const preciseDurationMinutes = Math.max(
+      1,
+      completion.totalDurationSeconds / 60,
+    );
 
-  let minMet = 3.5;
-  let maxMet = 5.5;
+    const activeSetSeconds = completion.activeSetSeconds ?? 0;
 
-  if (experience === "advanced") {
-    maxMet = 6;
+    const activeMinutes = activeSetSeconds / 60;
+
+    const setsPerMinute = completion.setsCompleted / preciseDurationMinutes;
+
+    const activeRatio = activeMinutes / preciseDurationMinutes;
+
+    /*
+     * Start with a moderate resistance-training MET value.
+     */
+    let met = 3.5;
+
+    /*
+     * Increase estimated intensity based on
+     * how dense the workout actually was.
+     */
+    if (setsPerMinute >= 0.3) {
+      met += 0.4;
+    }
+
+    if (setsPerMinute >= 0.45) {
+      met += 0.5;
+    }
+
+    /*
+     * Increase intensity slightly when more of the workout
+     * was spent actively performing sets.
+     */
+    if (activeRatio >= 0.2) {
+      met += 0.4;
+    }
+
+    if (activeRatio >= 0.3) {
+      met += 0.4;
+    }
+
+    /*
+     * Small adjustment for advanced users.
+     */
+    if (experience === "advanced") {
+      met += 0.2;
+    }
+
+    /*
+     * Slightly reduce the estimate for beginners.
+     */
+    if (experience === "beginner") {
+      met -= 0.2;
+    }
+
+    /*
+     * Keep MET within a realistic resistance-training range.
+     */
+    met = Math.min(6, Math.max(3, met));
+
+    /*
+     * Standard MET calorie equation:
+     *
+     * kcal/min =
+     * MET × 3.5 × body weight in kg / 200
+     */
+    const caloriesPerMinute = (met * 3.5 * weightKg) / 200;
+
+    const estimatedCalories = caloriesPerMinute * preciseDurationMinutes;
+
+    calories = {
+      min: roundToNearest5(estimatedCalories * 0.9),
+
+      max: roundToNearest5(estimatedCalories * 1.1),
+    };
   }
 
-  if (experience === "beginner") {
-    minMet = 3;
-    maxMet = 5;
-  }
-
-  const minCalories = roundToNearest5(minMet * effectiveWeight * hours);
-
-  const maxCalories = roundToNearest5(maxMet * effectiveWeight * hours);
-
   /*
-   * General daily hydration estimate:
-   * roughly 30–35 ml/kg/day.
+   * NUTRITION + HYDRATION
    *
-   * Add a modest workout allowance based on session duration.
+   * These also depend heavily on body weight, so if the
+   * user didn't provide weight we return null rather than
+   * silently assuming 70 kg.
    */
-  const baseWaterMin = effectiveWeight * 0.03;
-  const baseWaterMax = effectiveWeight * 0.035;
+  let nutrition: NutritionEstimate | null = null;
 
-  const workoutWaterAddition = durationMinutes >= 60 ? 0.5 : 0.3;
+  if (weightKg && weightKg > 0) {
+    /*
+     * General daily hydration range:
+     * approximately 30–35 ml/kg/day.
+     */
+    const baseWaterMin = weightKg * 0.03;
 
-  /*
-   * General active-person macronutrient ranges.
-   * These are intentionally broad and non-medical.
-   */
-  const proteinMin = roundToNearest5(effectiveWeight * 1.4);
+    const baseWaterMax = weightKg * 0.035;
 
-  const proteinMax = roundToNearest5(effectiveWeight * 1.8);
+    /*
+     * Add a modest allowance for the workout itself.
+     */
+    const workoutWaterAddition =
+      durationMinutes >= 60 ? 0.5 : durationMinutes >= 30 ? 0.3 : 0.2;
 
-  const carbsMin = roundToNearest5(effectiveWeight * 3);
+    /*
+     * Broad active-person daily macronutrient ranges.
+     */
+    const proteinMin = roundToNearest5(weightKg * 1.4);
 
-  const carbsMax = roundToNearest5(effectiveWeight * 5);
+    const proteinMax = roundToNearest5(weightKg * 1.8);
 
-  const fatMin = roundToNearest5(effectiveWeight * 0.7);
+    const carbsMin = roundToNearest5(weightKg * 3);
 
-  const fatMax = roundToNearest5(effectiveWeight * 1);
+    const carbsMax = roundToNearest5(weightKg * 5);
 
-  return {
-    durationMinutes,
+    const fatMin = roundToNearest5(weightKg * 0.7);
 
-    calories: {
-      min: minCalories,
-      max: maxCalories,
-    },
+    const fatMax = roundToNearest5(weightKg * 1);
 
-    nutrition: {
+    nutrition = {
       waterLitres: {
         min: roundOneDecimal(baseWaterMin + workoutWaterAddition),
 
@@ -141,6 +210,12 @@ export function calculateWorkoutSummary({
         min: fatMin,
         max: fatMax,
       },
-    },
+    };
+  }
+
+  return {
+    durationMinutes,
+    calories,
+    nutrition,
   };
 }
