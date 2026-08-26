@@ -220,7 +220,7 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   };
 
   return (
-    <section className="workout-player">
+    <section className="workout-player" id="workout-player">
       <div className="workout-player-grid" />
 
       <header className="workout-player-header">

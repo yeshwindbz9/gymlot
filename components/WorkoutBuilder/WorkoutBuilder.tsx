@@ -258,6 +258,23 @@ export default function WorkoutBuilder() {
     }, 100);
   }, [generatedWorkout]);
 
+  useEffect(() => {
+    if (!workoutStarted) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("workout-player")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [workoutStarted]);
+
   const goToStep = (nextStep: BuilderStep) => {
     setStep(nextStep);
 

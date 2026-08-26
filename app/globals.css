@@ -8206,3 +8206,7 @@ body::before {
 #workout-builder {
   scroll-margin-top: 68px;
 }
+
+#workout-player {
+  scroll-margin-top: 68px;
+}
