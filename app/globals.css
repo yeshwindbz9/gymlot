@@ -8210,3 +8210,88 @@ body::before {
 #workout-player {
   scroll-margin-top: 68px;
 }
+
+.set-button-active {
+  background: rgba(255, 87, 51, 0.14);
+}
+
+.set-button-active .set-circle {
+  background: var(--accent);
+}
+
+.integrity-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+
+  display: grid;
+  place-items: center;
+
+  padding: 16px;
+
+  background: rgba(17, 17, 17, 0.68);
+
+  backdrop-filter: blur(5px);
+}
+
+.integrity-card {
+  width: min(460px, 100%);
+
+  padding: 24px;
+
+  border: 2px solid var(--ink);
+
+  background: var(--paper);
+  color: var(--ink);
+
+  box-shadow: 8px 8px 0 var(--accent);
+}
+
+.integrity-card > span {
+  color: var(--accent);
+
+  font-size: 0.55rem;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+}
+
+.integrity-card h3 {
+  margin: 25px 0 16px;
+
+  font-family: var(--font-display);
+
+  font-size: 3rem;
+
+  line-height: 0.84;
+
+  letter-spacing: -0.06em;
+}
+
+.integrity-card p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 0.8rem;
+
+  line-height: 1.55;
+}
+
+.integrity-card button {
+  width: 100%;
+
+  min-height: 52px;
+
+  margin-top: 25px;
+
+  border: 1.5px solid var(--ink);
+
+  background: var(--accent);
+  color: var(--ink);
+
+  font-size: 0.68rem;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}

@@ -35,6 +35,7 @@ export type WorkoutCompletionSummary = {
   setsCompleted: number;
   totalSets: number;
 };
+const MIN_SET_SECONDS = 20;
 
 function createFallbackExercises(
   workout: GeneratedWorkout,
@@ -101,7 +102,15 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   const [startedAt] = useState(() => new Date());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
+  const [setStartedAt, setSetStartedAt] = useState<Record<string, number>>({});
+
+  const [setDurations, setSetDurations] = useState<Record<string, number>>({});
+
+  const [integrityMessage, setIntegrityMessage] = useState<string | null>(null);
+
   const activeExercise = exercises[activeExerciseIndex];
+  const getSetKey = (exerciseIndex: number, setIndex: number) =>
+    `${exerciseIndex}-${setIndex}`;
 
   const totalSets = useMemo(
     () => exercises.reduce((total, exercise) => total + exercise.sets, 0),
@@ -178,12 +187,62 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   };
 
   const toggleSet = (setIndex: number) => {
+    const key = getSetKey(activeExerciseIndex, setIndex);
+
     const wasComplete = completedSets[activeExerciseIndex]?.[setIndex];
+
+    /*
+     * Allow completed sets to be
+     * unticked normally.
+     */
+    if (wasComplete) {
+      setCompletedSets((current) => {
+        const exerciseSets = [...(current[activeExerciseIndex] ?? [])];
+
+        exerciseSets[setIndex] = false;
+
+        return {
+          ...current,
+          [activeExerciseIndex]: exerciseSets,
+        };
+      });
+
+      return;
+    }
+
+    const started = setStartedAt[key];
+
+    /*
+     * First tap starts the set.
+     */
+    if (!started) {
+      setSetStartedAt((current) => ({
+        ...current,
+        [key]: Date.now(),
+      }));
+
+      return;
+    }
+
+    const setSeconds = Math.floor((Date.now() - started) / 1000);
+
+    /*
+     * Minimum working-set duration.
+     */
+    if (setSeconds < MIN_SET_SECONDS) {
+      setIntegrityMessage(
+        `Nice try 😄 Give the set another ${
+          MIN_SET_SECONDS - setSeconds
+        } seconds. Don't lie to Gymlot.`,
+      );
+
+      return;
+    }
 
     setCompletedSets((current) => {
       const exerciseSets = [...(current[activeExerciseIndex] ?? [])];
 
-      exerciseSets[setIndex] = !exerciseSets[setIndex];
+      exerciseSets[setIndex] = true;
 
       return {
         ...current,
@@ -191,9 +250,27 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
       };
     });
 
-    if (!wasComplete) {
-      startRestTimer();
-    }
+    /*
+     * Cap a recorded set at 3 min so
+     * somebody leaving the phone open
+     * doesn't distort calorie estimates.
+     */
+    setSetDurations((current) => ({
+      ...current,
+      [key]: Math.min(setSeconds, 180),
+    }));
+
+    setSetStartedAt((current) => {
+      const next = {
+        ...current,
+      };
+
+      delete next[key];
+
+      return next;
+    });
+
+    startRestTimer();
   };
 
   const moveToExercise = (index: number) => {
@@ -366,24 +443,44 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
                 </div>
 
                 <div className="set-buttons">
-                  {activeSets.map((complete, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      className={`set-button ${
-                        complete ? "set-button-complete" : ""
-                      }`}
-                      onClick={() => toggleSet(index)}
-                    >
-                      <span>SET {index + 1}</span>
+                  {activeSets.map((complete, index) => {
+                    const key = getSetKey(activeExerciseIndex, index);
 
-                      {complete ? (
-                        <Check size={18} />
-                      ) : (
-                        <span className="set-circle" />
-                      )}
-                    </button>
-                  ))}
+                    const started = setStartedAt[key];
+
+                    const elapsed = started
+                      ? Math.floor((Date.now() - started) / 1000)
+                      : 0;
+
+                    const remaining = Math.max(0, MIN_SET_SECONDS - elapsed);
+
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        className={`set-button ${
+                          complete ? "set-button-complete" : ""
+                        } ${started ? "set-button-active" : ""}`}
+                        onClick={() => toggleSet(index)}
+                      >
+                        <span>
+                          {complete
+                            ? `SET ${index + 1} COMPLETE`
+                            : started && remaining > 0
+                              ? `SET ${index + 1} · ${remaining}s`
+                              : started
+                                ? `COMPLETE SET ${index + 1}`
+                                : `START SET ${index + 1}`}
+                        </span>
+
+                        {complete ? (
+                          <Check size={18} />
+                        ) : (
+                          <span className="set-circle" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -554,6 +651,44 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
                 }}
               />
             </div>
+          </div>
+        </div>
+      )}
+      {integrityMessage && (
+        <div className="integrity-overlay">
+          <div className="integrity-card">
+            <span>GYMLOT CHECK</span>
+
+            <h3>
+              DON'T CHEAT
+              <br />
+              YOURSELF.
+            </h3>
+
+            <p>{integrityMessage}</p>
+
+            <button type="button" onClick={() => setIntegrityMessage(null)}>
+              Fine, I&apos;ll train 😅
+            </button>
+          </div>
+        </div>
+      )}
+      {integrityMessage && (
+        <div className="integrity-overlay">
+          <div className="integrity-card">
+            <span>GYMLOT CHECK</span>
+
+            <h3>
+              DON'T CHEAT
+              <br />
+              YOURSELF.
+            </h3>
+
+            <p>{integrityMessage}</p>
+
+            <button type="button" onClick={() => setIntegrityMessage(null)}>
+              Fine, I&apos;ll train 😅
+            </button>
           </div>
         </div>
       )}
