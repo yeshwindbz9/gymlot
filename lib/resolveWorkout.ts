@@ -17,30 +17,107 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function getCandidates(exerciseName: string) {
+  /*
+   * 1. Primary source:
+   * ExerciseDB V1
+   */
+  let candidates = await searchExercises(exerciseName);
+
+  /*
+   * 2. Cached static fallback
+   */
+  if (!candidates.length) {
+    candidates = await searchFallbackExercises(exerciseName);
+  }
+
+  return candidates;
+}
+
 async function resolveExercise(
   exercise: GeneratedExercise,
 ): Promise<ResolvedExercise> {
   /*
-   * Primary source:
-   * ExerciseDB V1
+   * First try the exact exercise
+   * Gemini selected.
    */
-  let candidates = await searchExercises(exercise.name);
+  let candidates = await getCandidates(exercise.name);
+
+  let match = findBestExerciseMatch(exercise, candidates);
 
   /*
-   * Only use fallback if the
-   * primary source returned nothing.
+   * If the original exercise could not
+   * be resolved, try ONE suggested
+   * alternative.
    *
-   * This covers:
-   * - 503
-   * - network failure
-   * - no search results
+   * Example:
+   *
+   * Cable EZ Bar Curl
+   *       ↓
+   * no usable demo
+   *       ↓
+   * Barbell Curl
    */
-  if (!candidates.length) {
-    candidates = await searchFallbackExercises(exercise.name);
+  if (!match.exercise && exercise.alternatives?.length) {
+    const alternativeName = exercise.alternatives[0]?.trim();
+
+    if (alternativeName) {
+      /*
+       * Small gap before making another
+       * primary ExerciseDB request.
+       */
+      await wait(REQUEST_GAP_MS);
+
+      const alternativeCandidates = await getCandidates(alternativeName);
+
+      /*
+       * Build a temporary generated
+       * exercise so the matcher compares
+       * against the alternative name.
+       */
+      const alternativeExercise: GeneratedExercise = {
+        ...exercise,
+
+        name: alternativeName,
+      };
+
+      const alternativeMatch = findBestExerciseMatch(
+        alternativeExercise,
+        alternativeCandidates,
+      );
+
+      if (alternativeMatch.exercise) {
+        /*
+         * Merge using the alternative
+         * exercise name, but preserve the
+         * original alternatives list.
+         */
+        const resolved = mergeExerciseData(
+          alternativeExercise,
+          alternativeMatch.exercise,
+          alternativeMatch.score,
+        );
+
+        /*
+         * Keep the original Gemini exercise
+         * name so the UI can show that a swap
+         * was used.
+         */
+        return {
+          ...resolved,
+
+          aiName: exercise.name,
+
+          alternatives: exercise.alternatives,
+        };
+      }
+    }
   }
 
-  const match = findBestExerciseMatch(exercise, candidates);
-
+  /*
+   * Original exercise succeeded,
+   * or nothing could be resolved.
+   */
   return mergeExerciseData(exercise, match.exercise, match.score);
 }
 
@@ -56,6 +133,10 @@ export async function resolveWorkoutExercises(
 
     resolvedExercises.push(resolved);
 
+    /*
+     * Space the normal exercise
+     * requests slightly.
+     */
     if (index < workout.exercises.length - 1) {
       await wait(REQUEST_GAP_MS);
     }
