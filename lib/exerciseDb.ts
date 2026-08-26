@@ -20,36 +20,55 @@ function extractExercises(
   return [];
 }
 
-async function fetchWithRetry(url: string, retries = 2): Promise<Response> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
-    if (![502, 503, 504].includes(response.status)) {
-      return response;
-    }
-
-    if (attempt < retries) {
-      const delay = 400 * (attempt + 1);
-
-      console.warn(
-        `ExerciseDB returned ${response.status}. Retrying in ${delay}ms...`,
-      );
-
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  return fetch(url, {
+async function fetchExerciseDb(url: string): Promise<Response> {
+  const response = await fetch(url, {
     headers: {
       Accept: "application/json",
     },
-    cache: "no-store",
+
+    next: {
+      revalidate: 60 * 60 * 24,
+    },
   });
+
+  /*
+   * Retry ONCE only for temporary
+   * upstream failures.
+   *
+   * We deliberately do not retry
+   * 400 / 404 / 429 responses.
+   */
+  if ([502, 503, 504].includes(response.status)) {
+    /*
+     * Give the upstream service a
+     * little longer to recover.
+     */
+    const delay = 400 + Math.floor(Math.random() * 200);
+
+    console.warn(
+      `ExerciseDB returned ${response.status}. Retrying once in ${delay}ms.`,
+    );
+
+    await wait(delay);
+
+    /*
+     * Retry without cache so we do not
+     * accidentally reuse a failed response.
+     */
+    return fetch(url, {
+      headers: {
+        Accept: "application/json",
+      },
+
+      cache: "no-store",
+    });
+  }
+
+  return response;
 }
 
 export async function searchExercises(
@@ -66,19 +85,12 @@ export async function searchExercises(
     `?search=${encodeURIComponent(trimmedSearch)}`;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: "application/json",
-      },
-
-      next: {
-        revalidate: 60 * 60 * 24,
-      },
-    });
+    const response = await fetchExerciseDb(url);
 
     if (!response.ok) {
       console.warn(`ExerciseDB search failed for "${trimmedSearch}"`, {
         status: response.status,
+
         statusText: response.statusText,
       });
 
@@ -89,9 +101,7 @@ export async function searchExercises(
       | ExerciseDbResponse
       | ExerciseDbExercise[];
 
-    const exercises = extractExercises(data);
-
-    return exercises;
+    return extractExercises(data);
   } catch (error) {
     console.error(`ExerciseDB search failed for "${trimmedSearch}":`, error);
 
