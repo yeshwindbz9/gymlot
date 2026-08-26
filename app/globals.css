@@ -8295,3 +8295,30 @@ body::before {
 
   text-transform: uppercase;
 }
+
+.exercise-skip-button {
+  min-height: 52px;
+
+  padding: 0 16px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px solid rgba(17, 17, 17, 0.3);
+
+  background: transparent;
+  color: var(--muted);
+
+  font-size: 0.63rem;
+  font-weight: 800;
+
+  text-transform: uppercase;
+}
+
+@media (max-width: 520px) {
+  .exercise-skip-button {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

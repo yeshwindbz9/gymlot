@@ -109,6 +109,27 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   const [integrityMessage, setIntegrityMessage] = useState<string | null>(null);
 
   const activeExercise = exercises[activeExerciseIndex];
+  const [skippedExercises, setSkippedExercises] = useState<Set<number>>(
+    () => new Set(),
+  );
+
+  const skipExercise = () => {
+    setSkippedExercises((current) => {
+      const next = new Set(current);
+
+      next.add(activeExerciseIndex);
+
+      return next;
+    });
+
+    setRestRunning(false);
+    setRestSeconds(0);
+
+    if (activeExerciseIndex < exercises.length - 1) {
+      setActiveExerciseIndex(activeExerciseIndex + 1);
+    }
+  };
+
   const getSetKey = (exerciseIndex: number, setIndex: number) =>
     `${exerciseIndex}-${setIndex}`;
 
@@ -148,7 +169,14 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
   const activeExerciseComplete =
     activeSets.length > 0 && activeSets.every(Boolean);
 
-  const workoutComplete = setsCompleted === totalSets && totalSets > 0;
+  const workoutComplete = exercises.every((exercise, index) => {
+    const sets = completedSets[index] ?? [];
+
+    const completed =
+      exercise.sets > 0 && sets.length === exercise.sets && sets.every(Boolean);
+
+    return completed || skippedExercises.has(index);
+  });
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -539,6 +567,15 @@ export default function WorkoutPlayer({ workout, onExit, onComplete }: Props) {
             >
               <ArrowLeft size={17} />
               Previous
+            </button>
+
+            <button
+              type="button"
+              className="exercise-skip-button"
+              onClick={skipExercise}
+            >
+              Skip exercise
+              <SkipForward size={17} />
             </button>
 
             {!workoutComplete ? (
