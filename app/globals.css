@@ -8482,3 +8482,36 @@ body::before {
     animation: none;
   }
 }
+
+.typewriter-heading {
+  white-space: pre-line;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  margin-left: 0.04em;
+
+  animation: typewriter-blink 0.7s steps(1) infinite;
+}
+
+.typewriter-cursor-done {
+  animation-iteration-count: 3;
+}
+
+@keyframes typewriter-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-cursor {
+    display: none;
+  }
+}

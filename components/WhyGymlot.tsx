@@ -5,6 +5,7 @@ import {
   Sparkles,
   Timer,
 } from "lucide-react";
+import TypewriterHeading from "./TypewriterHeading";
 
 export default function WhyGymlot() {
   return (
@@ -13,15 +14,10 @@ export default function WhyGymlot() {
         <div className="why-left">
           <span className="why-eyebrow">WHY GYMLOT?</span>
 
-          <h2>
-            MOST AI
-            <br />
-            WORKOUT TOOLS
-            <br />
-            STOP TOO
-            <br />
-            EARLY.
-          </h2>
+          <TypewriterHeading
+            text={"MOST AI WORKOUT TOOLS?\nSTOP TOO EARLY."}
+            speed={35}
+          />
 
           <p className="why-copy">
             A generated list of exercises is useful. But that&apos;s only the

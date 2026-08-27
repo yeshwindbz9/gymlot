@@ -23,6 +23,7 @@ import WorkoutPlayer, {
 import WorkoutSummary from "@/components/Summary/WorkoutSummary";
 
 import { calculateWorkoutSummary } from "@/lib/workoutSummary";
+import TypewriterHeading from "../TypewriterHeading";
 
 type BuilderStep = 1 | 2 | 3;
 
@@ -484,11 +485,7 @@ export default function WorkoutBuilder() {
               <div className="builder-copy">
                 <p className="marker-note">start here ↘</p>
 
-                <h2>
-                  WHAT ARE
-                  <br />
-                  YOU TRAINING?
-                </h2>
+                <TypewriterHeading text="WHY GYMLOT?" speed={55} />
 
                 <p className="builder-description">
                   Pick a workout split or choose individual muscles. Gymlot will
@@ -659,13 +656,10 @@ export default function WorkoutBuilder() {
 
               <p className="marker-note">make it fit your day ↘</p>
 
-              <h2>
-                HOW MUCH
-                <br />
-                TIME HAVE
-                <br />
-                YOU GOT?
-              </h2>
+              <TypewriterHeading
+                text="HOW MUCH TIME HAVE YOU GOT?"
+                speed={55}
+              />
 
               <p className="builder-description">
                 Gymlot will use your available time to control the number of
@@ -800,11 +794,7 @@ export default function WorkoutBuilder() {
 
               <p className="marker-note">optional, but useful ↘</p>
 
-              <h2>
-                ABOUT
-                <br />
-                YOU.
-              </h2>
+              <TypewriterHeading text="ABOUT YOU." speed={55} />
 
               <p className="builder-description">
                 A little context helps Gymlot tailor exercise difficulty, volume

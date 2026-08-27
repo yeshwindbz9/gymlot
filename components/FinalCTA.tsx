@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Dumbbell, Sparkles } from "lucide-react";
+import TypewriterHeading from "./TypewriterHeading";
 
 export default function FinalCTA() {
   const scrollToBuilder = () => {
@@ -23,15 +24,10 @@ export default function FinalCTA() {
 
         <div className="final-cta-layout">
           <div className="final-cta-copy">
-            <h2>
-              STOP
-              <br />
-              OVERTHINKING
-              <br />
-              YOUR
-              <br />
-              WORKOUT.
-            </h2>
+            <TypewriterHeading
+              text={"STOP OVERTHINKING\nYOUR WORKOUT."}
+              speed={150}
+            />
 
             <p className="final-cta-marker">pick. plan. train. →</p>
           </div>

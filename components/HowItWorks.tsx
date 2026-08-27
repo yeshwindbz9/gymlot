@@ -5,6 +5,7 @@ import {
   PlayCircle,
   TimerReset,
 } from "lucide-react";
+import TypewriterHeading from "./TypewriterHeading";
 
 const steps = [
   {
@@ -49,15 +50,10 @@ export default function HowItWorks() {
             </p>
           </div>
 
-          <h2>
-            FROM
-            <br />
-            “WHAT DO I
-            <br />
-            TRAIN?”
-            <br />
-            TO DONE.
-          </h2>
+          <TypewriterHeading
+            text={"FROM WHAT DO I TRAIN?\nTO DONE."}
+            speed={150}
+          />
 
           <p className="how-marker">
             less thinking.

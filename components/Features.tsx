@@ -10,6 +10,7 @@ import {
   Play,
   Sparkles,
 } from "lucide-react";
+import TypewriterHeading from "./TypewriterHeading";
 
 type FeatureId = "planning" | "demos" | "timer" | "tracking" | "summary";
 
@@ -72,15 +73,10 @@ export default function Features() {
             </p>
           </div>
 
-          <h2>
-            NOT JUST
-            <br />
-            ANOTHER
-            <br />
-            WORKOUT
-            <br />
-            GENERATOR.
-          </h2>
+          <TypewriterHeading
+            text={"NOT JUST ANOTHER\nWORKOUT GENERATOR."}
+            speed={150}
+          />
 
           <p className="features-marker">click around ↘</p>
         </div>
